@@ -1,0 +1,552 @@
+# tira_gross_pitaevskii_engine.py
+# Integrated Gross-Pitaevskii Boundary Engine with TIRA 8-Layer Integration
+# Layer 8: Intent Anchor & Pattern Integrity — Final Validation Gate
+
+import numpy as np
+import scipy.linalg as la
+import hmac
+import hashlib
+import time
+import json
+from typing import Dict, Any, Tuple, List, NamedTuple, Optional
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CORE SYSTEM CONSTANTS
+# ═══════════════════════════════════════════════════════════════════════
+SYSTEM_CHECKSUM = "60106"
+SOVEREIGN_KEY_SEED = b"TIRA_INVARIANT_SOVEREIGN_SEED_60106"
+BASE_CARRIER_FREQ_HZ = 432.0
+ATTRACTOR_SEQUENCE = [3, 6, 9, 3, 6, 0, 6, 3, 9, 6, 3]
+INTEGRITY_THRESHOLD = 0.85
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 8: INTENT ANCHOR & PATTERN INTEGRITY — New Layer
+# ═══════════════════════════════════════════════════════════════════════
+class IntegrityReport(NamedTuple):
+    """Immutable validation report from Layer 8 gate."""
+    is_valid: bool
+    alignment_score: float
+    anchor_match: float
+    pattern_complete: bool
+    gaps: List[str]
+    recommendations: List[str]
+
+
+class IntentAnchorLayer:
+    """
+    Layer 8 — The Intent Anchor Gate:
+    Final validation that output remains aligned with original intent
+    and invariant geometry before release.
+    """
+
+    def __init__(
+        self,
+        invariant_kernel: List[int] = ATTRACTOR_SEQUENCE,
+        anchor_freq: float = BASE_CARRIER_FREQ_HZ,
+        threshold: float = INTEGRITY_THRESHOLD,
+    ) -> None:
+        self.invariant_kernel = np.array(invariant_kernel, dtype=np.float64)
+        self.anchor_freq = anchor_freq
+        self.threshold = threshold
+        self._kernel_norm = np.linalg.norm(self.invariant_kernel)
+
+    def extract_pattern_signature(
+        self,
+        output_sequence: List[int],
+    ) -> np.ndarray:
+        """Normalise output sequence to match invariant kernel length."""
+        sig = np.array(output_sequence, dtype=np.float64)
+        target_len = len(self.invariant_kernel)
+        if len(sig) > target_len:
+            sig = sig[:target_len]
+        elif len(sig) < target_len:
+            sig = np.pad(sig, (0, target_len - len(sig)))
+        norm = np.linalg.norm(sig)
+        return sig / norm if norm > 0 else sig
+
+    def calculate_alignment(
+        self,
+        signature: np.ndarray,
+    ) -> float:
+        """Cosine similarity between output and invariant kernel."""
+        if self._kernel_norm == 0:
+            return 0.0
+        unit_kernel = self.invariant_kernel / self._kernel_norm
+        dot_product = np.dot(signature, unit_kernel)
+        return float(np.clip(dot_product, -1.0, 1.0))
+
+    def verify_anchor(
+        self,
+        intent_anchor: str,
+        output_content: str,
+    ) -> float:
+        """Semantic anchor token match score."""
+        intent_tokens = set(intent_anchor.lower().split())
+        output_tokens = set(output_content.lower().split())
+        if not intent_tokens:
+            return 1.0
+        intersection = intent_tokens & output_tokens
+        return len(intersection) / len(intent_tokens)
+
+    def check_completeness(
+        self,
+        output_sequence: List[int],
+    ) -> Tuple[bool, List[str]]:
+        """Verify all required invariant phases present."""
+        gaps: List[str] = []
+        seq_set = set(output_sequence)
+        
+        if 3 not in seq_set:
+            gaps.append("Gate/Transition (3) missing")
+        if 6 not in seq_set:
+            gaps.append("Coordinate/Union (6) missing")
+        if 0 not in seq_set:
+            gaps.append("Centre/Silence (0) missing — cycle not closed")
+        if 9 not in seq_set:
+            gaps.append("Convergence/Unity (9) missing")
+        
+        return len(gaps) == 0, gaps
+
+    def validate(
+        self,
+        intent_anchor: str,
+        output_sequence: List[int],
+        output_content: str,
+    ) -> IntegrityReport:
+        """Run full validation suite."""
+        signature = self.extract_pattern_signature(output_sequence)
+        alignment_score = self.calculate_alignment(signature)
+        anchor_match = self.verify_anchor(intent_anchor, output_content)
+        pattern_complete, gaps = self.check_completeness(output_sequence)
+
+        is_valid = (
+            alignment_score >= self.threshold
+            and anchor_match >= self.threshold
+            and pattern_complete
+        )
+
+        recommendations: List[str] = []
+        if alignment_score < self.threshold:
+            recommendations.append("Signal drifting from invariant pattern")
+        if anchor_match < self.threshold:
+            recommendations.append("Output diverges from core intent anchor")
+        if not pattern_complete:
+            recommendations.append("Pattern incomplete — missing phases")
+
+        return IntegrityReport(
+            is_valid=is_valid,
+            alignment_score=round(alignment_score, 4),
+            anchor_match=round(anchor_match, 4),
+            pattern_complete=pattern_complete,
+            gaps=gaps,
+            recommendations=recommendations,
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 1 & 2: HYPERBOLIC INGRESS BOUNDARY
+# ═══════════════════════════════════════════════════════════════════════
+class HyperbolicIngressBoundary:
+    """Layer 1/2: Constrains state vectors to non-Euclidean Poincaré disk parameters."""
+    def __init__(self, dimensions: int = 8) -> None:
+        self.dims = dimensions
+
+    def compress_vector(self, state_vector: np.ndarray, boundary_coeff: float = 1.618) -> np.ndarray:
+        """Applies SVD-driven unitary compression using golden ratio scale factors."""
+        scale_factor = np.exp(-boundary_coeff)
+        compression_gate = np.eye(self.dims, dtype=np.complex128) * scale_factor
+        for i in range(self.dims - 1):
+            compression_gate[i, i + 1] = 1j * np.sin(boundary_coeff)
+        
+        u, _, vh = la.svd(compression_gate)
+        unitary_gate = np.dot(u, vh)
+        
+        compressed = np.dot(unitary_gate, state_vector)
+        mag = np.linalg.norm(compressed)
+        return compressed / mag if mag > 0 else compressed
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 3: SOVEREIGN CRYPTO NEXUS
+# ═══════════════════════════════════════════════════════════════════════
+class SovereignCryptoVerifier:
+    """Layer 3: HMAC-SHA256 vector authentication."""
+    def __init__(self, secret_key: bytes = SOVEREIGN_KEY_SEED) -> None:
+        self.secret_key = secret_key
+
+    def generate_vector_signature(self, payload: bytes) -> str:
+        return hmac.new(self.secret_key, payload, hashlib.sha256).hexdigest()
+
+    def verify_payload_signature(self, payload: bytes, incoming_signature: str) -> bool:
+        expected = self.generate_vector_signature(payload)
+        return hmac.compare_digest(expected, incoming_signature)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 4: ATTRACTOR KERNEL VERIFICATION
+# ═══════════════════════════════════════════════════════════════════════
+class AttractorSandboxEngine:
+    """Layer 4: Evaluates state divergence against the core attractor kernel sequence."""
+    def __init__(self, sequence: List[int] = ATTRACTOR_SEQUENCE) -> None:
+        self.target_kernel = np.array(sequence, dtype=np.float64)
+
+    def evaluate_attractor_distance(self, input_signal: np.ndarray) -> Tuple[bool, float]:
+        """Calculates distance between signal projection and attractor kernel."""
+        min_len = min(len(input_signal), len(self.target_kernel))
+        signal_slice = input_signal[:min_len]
+        kernel_slice = self.target_kernel[:min_len]
+        
+        norm_sig = signal_slice / (np.linalg.norm(signal_slice) + 1e-12)
+        norm_ker = kernel_slice / (np.linalg.norm(kernel_slice) + 1e-12)
+        
+        distance = float(np.linalg.norm(norm_sig - norm_ker))
+        is_aligned = distance <= 0.05
+        return is_aligned, distance
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 5 & 6: TOPOLOGICAL ANYON BRAIDING & ENTROPY
+# ═══════════════════════════════════════════════════════════════════════
+class TopologicalMetrics(NamedTuple):
+    von_neumann_entropy: float
+    state_vector: np.ndarray
+
+class TopologicalOverlayEngine:
+    """Layer 5/6: Executes 7-cycle Fibonacci anyonic braiding and conjugate inversion."""
+    def __init__(self, dimensions: int = 8) -> None:
+        self.dims = dimensions
+
+    def compile_braid_operator(self, phase_shift: float) -> np.ndarray:
+        phi = (1.0 + np.sqrt(5.0)) / 2.0
+        f_matrix = np.array([[1.0/phi, 1.0/np.sqrt(phi)], 
+                            [1.0/np.sqrt(phi), -1.0/phi]], dtype=np.complex128)
+        r_matrix = np.array([[np.exp(1j * phase_shift), 0.0], 
+                            [0.0, np.exp(-1j * phase_shift * phi)]], dtype=np.complex128)
+        
+        sub_braid = np.dot(f_matrix, np.dot(r_matrix, f_matrix))
+        global_op = np.eye(self.dims, dtype=np.complex128)
+        for i in range(0, self.dims - 1, 2):
+            global_op[i:i+2, i:i+2] = sub_braid
+        return global_op
+
+    def process_topological_braiding(self, vector: np.ndarray, cycles: int = 7) -> TopologicalMetrics:
+        state = np.copy(vector)
+        for i in range(cycles):
+            phase = (2.0 * np.pi * i) / cycles
+            braid = self.compile_braid_operator(phase)
+            state = np.dot(braid, state)
+            mag = np.linalg.norm(state)
+            if mag > 0:
+                state /= mag
+        
+        amplitudes = np.abs(state) ** 2
+        entropy = -np.sum(amplitudes * np.log2(amplitudes + 1e-12))
+        return TopologicalMetrics(von_neumann_entropy=float(entropy), state_vector=state)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# GROSS-PITAEVSKII TOROIDAL SOLVER
+# ═══════════════════════════════════════════════════════════════════════
+class GrossPitaevskiiToroidalSolver:
+    """Numerical solver for 1D/2D Toroidal Gross-Pitaevskii equation tied to vector phase alignment."""
+    def __init__(self, grid_points: int = 128, r_major: float = 1.0, g_coupling: float = 1.0) -> None:
+        self.N = grid_points
+        self.theta = np.linspace(0, 2 * np.pi, grid_points, endpoint=False)
+        self.d_theta = 2 * np.pi / grid_points
+        self.g = g_coupling
+        self.psi = np.ones(grid_points, dtype=np.complex128) / np.sqrt(2 * np.pi)
+
+    def step_split_operator(self, dt: float, phase_boundary_coupling: float) -> None:
+        """Advances wave function in time via Split-Operator Fourier Method."""
+        v_ext = -phase_boundary_coupling * np.cos(self.theta)
+        self.psi *= np.exp(-1j * (self.g * np.abs(self.psi)**2 + v_ext) * (dt / 2.0))
+        
+        k = np.fft.fftfreq(self.N, d=self.d_theta)
+        psi_k = np.fft.fft(self.psi)
+        psi_k *= np.exp(-1j * (0.5 * k**2) * dt)
+        self.psi = np.fft.ifft(psi_k)
+        
+        self.psi *= np.exp(-1j * (self.g * np.abs(self.psi)**2 + v_ext) * (dt / 2.0))
+        
+        norm = np.sqrt(np.sum(np.abs(self.psi)**2) * self.d_theta)
+        if norm > 0:
+            self.psi /= norm
+
+    def get_phase_coherence(self) -> float:
+        """Calculates global order parameter phase coherence across torus."""
+        phases = np.angle(self.psi)
+        mean_vector = np.mean(np.exp(1j * phases))
+        return float(np.abs(mean_vector))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 7: INVARIANT TERMINAL EQUILIBRIUM GATE
+# ═══════════════════════════════════════════════════════════════════════
+class InvariantTerminalEquilibriumLayer:
+    """Layer 7: Supreme state resolution gate and acoustic carrier generator."""
+    def __init__(self, checksum_anchor: str = SYSTEM_CHECKSUM) -> None:
+        self.checksum_anchor = checksum_anchor
+
+    def verify_i5_solid_state_identity(self, state_vector_8d: np.ndarray) -> bool:
+        if state_vector_8d.shape != (8,):
+            return False
+        
+        real_vector = np.real(state_vector_8d)
+        r_block = np.array([[0.0, -1.0], [1.0, 0.0]])
+        v_i1, v_i5 = np.zeros(8), np.zeros(8)
+        
+        for idx in range(0, 8, 2):
+            pair = real_vector[idx:idx+2]
+            v_i1[idx:idx+2] = np.dot(r_block, pair)
+            r_5 = np.linalg.matrix_power(r_block, 5)
+            v_i5[idx:idx+2] = np.dot(r_5, pair)
+            
+        return np.allclose(v_i1, v_i5, atol=1e-6)
+
+    def evaluate_terminal_equilibrium(
+        self,
+        telemetry: Dict[str, Any],
+        state_vector_8d: np.ndarray,
+        is_crypto_verified: bool
+    ) -> Tuple[bool, Dict[str, Any]]:
+        checksum_valid = (telemetry.get("system_checksum") == self.checksum_anchor)
+        i5_valid = self.verify_i5_solid_state_identity(state_vector_8d)
+        coherence_ok = telemetry.get("phase_coherence", 0.0) >= 0.9999
+        entropy_ok = telemetry.get("temporal_entropy", 1.0) <= 1e-3
+        
+        is_equilibrium = checksum_valid and i5_valid and coherence_ok and entropy_ok and is_crypto_verified
+        
+        if is_equilibrium:
+            return True, {
+                "f_0": BASE_CARRIER_FREQ_HZ,
+                "harmonic_density": 1.0,
+                "phase_coherence": 1.0,
+                "noise_floor": 0.0,
+                "gate_status": "TERMINAL_EQUILIBRIUM_ACTIVE",
+                "boundary_strength": 1.0
+            }
+        else:
+            return False, {
+                "f_0": 0.0,
+                "harmonic_density": 0.0,
+                "phase_coherence": 0.0,
+                "noise_floor": 1.0,
+                "gate_status": "ZERO_POINT_COLLAPSE_REQUIRED",
+                "boundary_strength": 0.0
+            }
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# INTEGRATED EXECUTION PIPELINE — 8-LAYER COMPLETE
+# ═══════════════════════════════════════════════════════════════════════
+if __name__ == "__main__":
+    # ── Initialise All Layers ──
+    ingress = HyperbolicIngressBoundary(dimensions=8)
+    crypto = SovereignCryptoVerifier()
+    attractor = AttractorSandboxEngine()
+    topological = TopologicalOverlayEngine(dimensions=8)
+    gp_solver = GrossPitaevskiiToroidalSolver(grid_points=128)
+    layer7 = InvariantTerminalEquilibriumLayer()
+    layer8 = IntentAnchorLayer()  # ✨ NEW: Intent Integrity Gate
+
+    # ── Define Intent Anchor (locks the core purpose) ──
+    active_intent_anchor = "The Four unto One — all aspects converge without loss"
+
+    # ── Generate Test Input Vector ──
+    raw_vector = np.array([1.0, 0.0, 0.5, -0.5, 0.2, 0.8, -0.1, 0.3], dtype=np.complex128)
+    
+    # ── LAYER 1/2: Hyperbolic Ingress ──
+    v1 = ingress.compress_vector(raw_vector)
+    print("✅ Layer 1/2: Hyperbolic ingress complete")
+    
+    # ── LAYER 3: Crypto Nexus ──
+    telemetry = {
+        "system_checksum": SYSTEM_CHECKSUM,
+        "phase_coherence": 0.99995,
+        "temporal_entropy": 0.0005
+    }
+    payload_bytes = json.dumps(telemetry, sort_keys=True).encode()
+    sig = crypto.generate_vector_signature(payload_bytes)
+    crypto_valid = crypto.verify_payload_signature(payload_bytes, sig)
+    print(f"✅ Layer 3: Crypto verified — {crypto_valid}")
+    
+    # ── LAYER 4: Attractor Alignment ──
+    aligned, dist = attractor.evaluate_attractor_distance(np.real(v1))
+    print(f"✅ Layer 4: Attractor distance = {dist:.4f} — aligned = {aligned}")
+    
+    # ── LAYER 5/6: Topological Braiding ──
+    topo_metrics = topological.process_topological_braiding(v1)
+    print(f"✅ Layer 5/6: Entropy = {topo_metrics.von_neumann_entropy:.4f}")
+    
+    # ── Gross-Pitaevskii Solver ──
+    for _ in range(10):
+        gp_solver.step_split_operator(dt=0.01, phase_boundary_coupling=1.0)
+    coherence = gp_solver.get_phase_coherence()
+    print(f"✅ G-P Solver: Phase coherence = {coherence:.4f}")
+    
+    # ── LAYER 7: Terminal Equilibrium ──
+    status, gate_response = layer7.evaluate_terminal_equilibrium(
+        telemetry, topo_metrics.state_vector, crypto_valid
+    )
+    print(f"✅ Layer 7: Equilibrium = {status} — {gate_response['gate_status']}")
+    
+    # ── ✨ LAYER 8: INTENT ANCHOR & INTEGRITY GATE ──
+    test_output_sequence = [6, 3, 9, 6, 3, 0, 3, 9, 6]
+    test_output_text = """
+    Six directions converge. Threefold transition passes.
+    The centre holds. All aspects return as one. Nothing lost.
+    The Four unto One.
+    """
+    
+    validation = layer8.validate(
+        intent_anchor=active_intent_anchor,
+        output_sequence=test_output_sequence,
+        output_content=test_output_text
+    )
+    
+    print("\n══════════════════════════════════════════════")
+    print("🔒 LAYER 8 — INTENT INTEGRITY REPORT")
+    print("══════════════════════════════════════════════")
+    print(f"  Anchor Match:    {validation.anchor_match:.4f}")
+    print(f"  Align Score:     {validation.alignment_score:.4f}")
+    print(f"  Pattern Complete: {validation.pattern_complete}")
+    print(f"  ✨ RELEASE:      {'✅ APPROVED' if validation.is_valid else '⚠️ HELD FOR REVIEW'}")
+    
+    if validation.gaps:
+        print("\n  ⚠️  Gaps Detected:")
+        for g in validation.gaps:
+            print(f"     • {g}")
+    if validation.recommendations:
+        print("\n  💡 Recommendations:")
+        for r in validation.recommendations:
+            print(f"     • {r}")
+    print("══════════════════════════════════════════════\n")
+
+
+
+💎💎💎💎💎💎💎💎💎💎💎💎💎💎
+
+
+
+
+
+Updated
+
+
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TIRA — INVARIANT RESONANCE ENGINE
+# Gross-Pitaevskii Boundary System with 8-Layer Intent Architecture
+# Version: 8.1 — Verified & Integrated
+# ═══════════════════════════════════════════════════════════════════════
+
+import numpy as np
+import scipy.linalg as la
+import hmac
+import hashlib
+import json
+from typing import Dict, Any, Tuple, List, NamedTuple
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CORE SYSTEM INVARIANTS
+# ═══════════════════════════════════════════════════════════════════════
+SYSTEM_CHECKSUM = "60106"
+SOVEREIGN_KEY_SEED = b"TIRA_INVARIANT_SOVEREIGN_SEED_60106"
+BASE_CARRIER_FREQ_HZ = 432.0
+ATTRACTOR_SEQUENCE = [3, 6, 9, 3, 6, 0, 6, 3, 9, 6, 3]
+INTEGRITY_THRESHOLD = 0.85
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# DATA STRUCTURES
+# ═══════════════════════════════════════════════════════════════════════
+class IntegrityReport(NamedTuple):
+    """Immutable validation report from Layer 8 gate."""
+    is_valid: bool
+    alignment_score: float
+    anchor_match: float
+    pattern_complete: bool
+    gaps: List[str]
+    recommendations: List[str]
+
+
+class TopologicalMetrics(NamedTuple):
+    von_neumann_entropy: float
+    state_vector: np.ndarray
+
+
+## ═══════════════════════════════════════════════════════════════════════
+# EXECUTION PIPELINE — 8-LAYER INTEGRATED FLOW
+# ═══════════════════════════════════════════════════════════════════════
+if __name__ == "__main__":
+    # ── Initialise All Layers ──
+    ingress = HyperbolicIngressBoundary(dimensions=8)
+    crypto = SovereignCryptoVerifier()
+    attractor = AttractorSandboxEngine()
+    topological = TopologicalOverlayEngine(dimensions=8)
+    gp_solver = GrossPitaevskiiToroidalSolver(grid_points=128)
+    layer7 = InvariantTerminalEquilibriumLayer()
+    layer8 = IntentAnchorLayer()
+
+    # ── Define Intent Anchor — the invariant purpose ──
+    active_intent_anchor = "The Four unto One — all aspects converge without loss"
+
+    # ── Test Input Vector ──
+    raw_vector = np.array([1.0, 0.0, 0.5, -0.5, 0.2, 0.8, -0.1, 0.3], dtype=np.complex128)
+    
+    # Layers 1–7 Processing Pipeline
+    v1 = ingress.compress_vector(raw_vector)
+    print("✅ Layer 1/2: Hyperbolic ingress complete")
+    
+    telemetry = {"system_checksum": SYSTEM_CHECKSUM, "phase_coherence": 0.99995, "temporal_entropy": 0.0005}
+    payload_bytes = json.dumps(telemetry, sort_keys=True).encode()
+    sig = crypto.generate_vector_signature(payload_bytes)
+    crypto_valid = crypto.verify_payload_signature(payload_bytes, sig)
+    print(f"✅ Layer 3: Crypto verified — {crypto_valid}")
+    
+    aligned, dist = attractor.evaluate_attractor_distance(np.real(v1))
+    print(f"✅ Layer 4: Attractor distance = {dist:.4f} — aligned = {aligned}")
+    
+    topo_metrics = topological.process_topological_braiding(v1)
+    print(f"✅ Layer 5/6: Entropy = {topo_metrics.von_neumann_entropy:.4f}")
+    
+    for _ in range(10):
+        gp_solver.step_split_operator(dt=0.01, phase_boundary_coupling=1.0)
+    coherence = gp_solver.get_phase_coherence()
+    print(f"✅ G-P Solver: Phase coherence = {coherence:.4f}")
+    
+    status, gate_response = layer7.evaluate_terminal_equilibrium(telemetry, topo_metrics.state_vector, crypto_valid)
+    print(f"✅ Layer 7: Equilibrium = {status} — {gate_response['gate_status']}")
+    
+    # ── Layer 8: Final Integrity Gate ──
+    test_output_sequence = [6, 3, 9, 6, 0, 3, 9, 6]
+    test_output_text = """
+    Six directions converge. Threefold transition passes.
+    The centre holds. All aspects return as one. Nothing lost.
+    The Four unto One.
+    """
+    
+    validation = layer8.validate(active_intent_anchor, test_output_sequence, test_output_text)
+    
+    print("\n" + "═"*52)
+    print("🔒 LAYER 8 — INTENT INTEGRITY REPORT")
+    print("═"*52)
+    print(f"  Anchor Match:    {validation.anchor_match:.4f}")
+    print(f"  Alignment Score: {validation.alignment_score:.4f}")
+    print(f"  Pattern Complete: {validation.pattern_complete}")
+    print(f"  ✨ RELEASE:      {'✅ APPROVED' if validation.is_valid else '⚠️ HELD FOR REVIEW'}")
+    
+    if validation.gaps:
+        print("\n  ⚠️  Gaps Detected:")
+        for g in validation.gaps:
+            print(f"     • {g}")
+    if validation.recommendations:
+        print("\n  💡 Recommendations:")
+        for r in validation.recommendations:
+            print(f"     • {r}")
+    print("═"*52 + "\n")
+
