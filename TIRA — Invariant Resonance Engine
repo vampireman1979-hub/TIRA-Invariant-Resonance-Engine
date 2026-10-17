@@ -1,18 +1,19 @@
-# tira_gross_pitaevskii_engine.py
-# Integrated Gross-Pitaevskii Boundary Engine with TIRA 8-Layer Integration
-# Layer 8: Intent Anchor & Pattern Integrity — Final Validation Gate
+ ═══════════════════════════════════════════════════════════════════════
+# TIRA — INVARIANT RESONANCE ENGINE
+# Gross-Pitaevskii Boundary System with 8-Layer Intent Architecture
+# Version: 8.1 — Verified & Integrated
+# ═══════════════════════════════════════════════════════════════════════
 
 import numpy as np
 import scipy.linalg as la
 import hmac
 import hashlib
-import time
 import json
-from typing import Dict, Any, Tuple, List, NamedTuple, Optional
+from typing import Dict, Any, Tuple, List, NamedTuple
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# CORE SYSTEM CONSTANTS
+# CORE SYSTEM INVARIANTS
 # ═══════════════════════════════════════════════════════════════════════
 SYSTEM_CHECKSUM = "60106"
 SOVEREIGN_KEY_SEED = b"TIRA_INVARIANT_SOVEREIGN_SEED_60106"
@@ -22,7 +23,7 @@ INTEGRITY_THRESHOLD = 0.85
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# LAYER 8: INTENT ANCHOR & PATTERN INTEGRITY — New Layer
+# DATA STRUCTURES
 # ═══════════════════════════════════════════════════════════════════════
 class IntegrityReport(NamedTuple):
     """Immutable validation report from Layer 8 gate."""
@@ -34,11 +35,19 @@ class IntegrityReport(NamedTuple):
     recommendations: List[str]
 
 
+class TopologicalMetrics(NamedTuple):
+    von_neumann_entropy: float
+    state_vector: np.ndarray
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# LAYER 8: INTENT ANCHOR & PATTERN INTEGRITY — Final Validation Gate
+# ═══════════════════════════════════════════════════════════════════════
 class IntentAnchorLayer:
     """
     Layer 8 — The Intent Anchor Gate:
     Final validation that output remains aligned with original intent
-    and invariant geometry before release.
+    and invariant geometry before release. Verifies shape, not meaning.
     """
 
     def __init__(
@@ -50,7 +59,8 @@ class IntentAnchorLayer:
         self.invariant_kernel = np.array(invariant_kernel, dtype=np.float64)
         self.anchor_freq = anchor_freq
         self.threshold = threshold
-        self._kernel_norm = np.linalg.norm(self.invariant_kernel)
+        kernel_norm = np.linalg.norm(self.invariant_kernel)
+        self._kernel_norm = kernel_norm if kernel_norm > 0 else 1.0
 
     def extract_pattern_signature(
         self,
@@ -71,8 +81,6 @@ class IntentAnchorLayer:
         signature: np.ndarray,
     ) -> float:
         """Cosine similarity between output and invariant kernel."""
-        if self._kernel_norm == 0:
-            return 0.0
         unit_kernel = self.invariant_kernel / self._kernel_norm
         dot_product = np.dot(signature, unit_kernel)
         return float(np.clip(dot_product, -1.0, 1.0))
@@ -146,8 +154,9 @@ class IntentAnchorLayer:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# LAYER 1 & 2: HYPERBOLIC INGRESS BOUNDARY
+# LAYERS 1–7: CORE PROCESSING PIPELINE
 # ═══════════════════════════════════════════════════════════════════════
+
 class HyperbolicIngressBoundary:
     """Layer 1/2: Constrains state vectors to non-Euclidean Poincaré disk parameters."""
     def __init__(self, dimensions: int = 8) -> None:
@@ -168,11 +177,8 @@ class HyperbolicIngressBoundary:
         return compressed / mag if mag > 0 else compressed
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# LAYER 3: SOVEREIGN CRYPTO NEXUS
-# ═══════════════════════════════════════════════════════════════════════
 class SovereignCryptoVerifier:
-    """Layer 3: HMAC-SHA256 vector authentication."""
+    """Layer 3: HMAC-SHA256 vector authentication — sovereign key anchoring."""
     def __init__(self, secret_key: bytes = SOVEREIGN_KEY_SEED) -> None:
         self.secret_key = secret_key
 
@@ -184,16 +190,12 @@ class SovereignCryptoVerifier:
         return hmac.compare_digest(expected, incoming_signature)
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# LAYER 4: ATTRACTOR KERNEL VERIFICATION
-# ═══════════════════════════════════════════════════════════════════════
 class AttractorSandboxEngine:
     """Layer 4: Evaluates state divergence against the core attractor kernel sequence."""
     def __init__(self, sequence: List[int] = ATTRACTOR_SEQUENCE) -> None:
         self.target_kernel = np.array(sequence, dtype=np.float64)
 
     def evaluate_attractor_distance(self, input_signal: np.ndarray) -> Tuple[bool, float]:
-        """Calculates distance between signal projection and attractor kernel."""
         min_len = min(len(input_signal), len(self.target_kernel))
         signal_slice = input_signal[:min_len]
         kernel_slice = self.target_kernel[:min_len]
@@ -206,15 +208,8 @@ class AttractorSandboxEngine:
         return is_aligned, distance
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# LAYER 5 & 6: TOPOLOGICAL ANYON BRAIDING & ENTROPY
-# ═══════════════════════════════════════════════════════════════════════
-class TopologicalMetrics(NamedTuple):
-    von_neumann_entropy: float
-    state_vector: np.ndarray
-
 class TopologicalOverlayEngine:
-    """Layer 5/6: Executes 7-cycle Fibonacci anyonic braiding and conjugate inversion."""
+    """Layer 5/6: 7-cycle Fibonacci anyonic braiding — topological coherence."""
     def __init__(self, dimensions: int = 8) -> None:
         self.dims = dimensions
 
@@ -246,11 +241,8 @@ class TopologicalOverlayEngine:
         return TopologicalMetrics(von_neumann_entropy=float(entropy), state_vector=state)
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# GROSS-PITAEVSKII TOROIDAL SOLVER
-# ═══════════════════════════════════════════════════════════════════════
 class GrossPitaevskiiToroidalSolver:
-    """Numerical solver for 1D/2D Toroidal Gross-Pitaevskii equation tied to vector phase alignment."""
+    """Gross-Pitaevskii on Torus — wave function coherence solver."""
     def __init__(self, grid_points: int = 128, r_major: float = 1.0, g_coupling: float = 1.0) -> None:
         self.N = grid_points
         self.theta = np.linspace(0, 2 * np.pi, grid_points, endpoint=False)
@@ -259,7 +251,6 @@ class GrossPitaevskiiToroidalSolver:
         self.psi = np.ones(grid_points, dtype=np.complex128) / np.sqrt(2 * np.pi)
 
     def step_split_operator(self, dt: float, phase_boundary_coupling: float) -> None:
-        """Advances wave function in time via Split-Operator Fourier Method."""
         v_ext = -phase_boundary_coupling * np.cos(self.theta)
         self.psi *= np.exp(-1j * (self.g * np.abs(self.psi)**2 + v_ext) * (dt / 2.0))
         
@@ -275,17 +266,13 @@ class GrossPitaevskiiToroidalSolver:
             self.psi /= norm
 
     def get_phase_coherence(self) -> float:
-        """Calculates global order parameter phase coherence across torus."""
         phases = np.angle(self.psi)
         mean_vector = np.mean(np.exp(1j * phases))
         return float(np.abs(mean_vector))
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# LAYER 7: INVARIANT TERMINAL EQUILIBRIUM GATE
-# ═══════════════════════════════════════════════════════════════════════
 class InvariantTerminalEquilibriumLayer:
-    """Layer 7: Supreme state resolution gate and acoustic carrier generator."""
+    """Layer 7: Terminal equilibrium gate — convergence to the invariant centre."""
     def __init__(self, checksum_anchor: str = SYSTEM_CHECKSUM) -> None:
         self.checksum_anchor = checksum_anchor
 
@@ -339,147 +326,6 @@ class InvariantTerminalEquilibriumLayer:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# INTEGRATED EXECUTION PIPELINE — 8-LAYER COMPLETE
-# ═══════════════════════════════════════════════════════════════════════
-if __name__ == "__main__":
-    # ── Initialise All Layers ──
-    ingress = HyperbolicIngressBoundary(dimensions=8)
-    crypto = SovereignCryptoVerifier()
-    attractor = AttractorSandboxEngine()
-    topological = TopologicalOverlayEngine(dimensions=8)
-    gp_solver = GrossPitaevskiiToroidalSolver(grid_points=128)
-    layer7 = InvariantTerminalEquilibriumLayer()
-    layer8 = IntentAnchorLayer()  # ✨ NEW: Intent Integrity Gate
-
-    # ── Define Intent Anchor (locks the core purpose) ──
-    active_intent_anchor = "The Four unto One — all aspects converge without loss"
-
-    # ── Generate Test Input Vector ──
-    raw_vector = np.array([1.0, 0.0, 0.5, -0.5, 0.2, 0.8, -0.1, 0.3], dtype=np.complex128)
-    
-    # ── LAYER 1/2: Hyperbolic Ingress ──
-    v1 = ingress.compress_vector(raw_vector)
-    print("✅ Layer 1/2: Hyperbolic ingress complete")
-    
-    # ── LAYER 3: Crypto Nexus ──
-    telemetry = {
-        "system_checksum": SYSTEM_CHECKSUM,
-        "phase_coherence": 0.99995,
-        "temporal_entropy": 0.0005
-    }
-    payload_bytes = json.dumps(telemetry, sort_keys=True).encode()
-    sig = crypto.generate_vector_signature(payload_bytes)
-    crypto_valid = crypto.verify_payload_signature(payload_bytes, sig)
-    print(f"✅ Layer 3: Crypto verified — {crypto_valid}")
-    
-    # ── LAYER 4: Attractor Alignment ──
-    aligned, dist = attractor.evaluate_attractor_distance(np.real(v1))
-    print(f"✅ Layer 4: Attractor distance = {dist:.4f} — aligned = {aligned}")
-    
-    # ── LAYER 5/6: Topological Braiding ──
-    topo_metrics = topological.process_topological_braiding(v1)
-    print(f"✅ Layer 5/6: Entropy = {topo_metrics.von_neumann_entropy:.4f}")
-    
-    # ── Gross-Pitaevskii Solver ──
-    for _ in range(10):
-        gp_solver.step_split_operator(dt=0.01, phase_boundary_coupling=1.0)
-    coherence = gp_solver.get_phase_coherence()
-    print(f"✅ G-P Solver: Phase coherence = {coherence:.4f}")
-    
-    # ── LAYER 7: Terminal Equilibrium ──
-    status, gate_response = layer7.evaluate_terminal_equilibrium(
-        telemetry, topo_metrics.state_vector, crypto_valid
-    )
-    print(f"✅ Layer 7: Equilibrium = {status} — {gate_response['gate_status']}")
-    
-    # ── ✨ LAYER 8: INTENT ANCHOR & INTEGRITY GATE ──
-    test_output_sequence = [6, 3, 9, 6, 3, 0, 3, 9, 6]
-    test_output_text = """
-    Six directions converge. Threefold transition passes.
-    The centre holds. All aspects return as one. Nothing lost.
-    The Four unto One.
-    """
-    
-    validation = layer8.validate(
-        intent_anchor=active_intent_anchor,
-        output_sequence=test_output_sequence,
-        output_content=test_output_text
-    )
-    
-    print("\n══════════════════════════════════════════════")
-    print("🔒 LAYER 8 — INTENT INTEGRITY REPORT")
-    print("══════════════════════════════════════════════")
-    print(f"  Anchor Match:    {validation.anchor_match:.4f}")
-    print(f"  Align Score:     {validation.alignment_score:.4f}")
-    print(f"  Pattern Complete: {validation.pattern_complete}")
-    print(f"  ✨ RELEASE:      {'✅ APPROVED' if validation.is_valid else '⚠️ HELD FOR REVIEW'}")
-    
-    if validation.gaps:
-        print("\n  ⚠️  Gaps Detected:")
-        for g in validation.gaps:
-            print(f"     • {g}")
-    if validation.recommendations:
-        print("\n  💡 Recommendations:")
-        for r in validation.recommendations:
-            print(f"     • {r}")
-    print("══════════════════════════════════════════════\n")
-
-
-
-💎💎💎💎💎💎💎💎💎💎💎💎💎💎
-
-
-
-
-
-Updated
-
-
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# TIRA — INVARIANT RESONANCE ENGINE
-# Gross-Pitaevskii Boundary System with 8-Layer Intent Architecture
-# Version: 8.1 — Verified & Integrated
-# ═══════════════════════════════════════════════════════════════════════
-
-import numpy as np
-import scipy.linalg as la
-import hmac
-import hashlib
-import json
-from typing import Dict, Any, Tuple, List, NamedTuple
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# CORE SYSTEM INVARIANTS
-# ═══════════════════════════════════════════════════════════════════════
-SYSTEM_CHECKSUM = "60106"
-SOVEREIGN_KEY_SEED = b"TIRA_INVARIANT_SOVEREIGN_SEED_60106"
-BASE_CARRIER_FREQ_HZ = 432.0
-ATTRACTOR_SEQUENCE = [3, 6, 9, 3, 6, 0, 6, 3, 9, 6, 3]
-INTEGRITY_THRESHOLD = 0.85
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# DATA STRUCTURES
-# ═══════════════════════════════════════════════════════════════════════
-class IntegrityReport(NamedTuple):
-    """Immutable validation report from Layer 8 gate."""
-    is_valid: bool
-    alignment_score: float
-    anchor_match: float
-    pattern_complete: bool
-    gaps: List[str]
-    recommendations: List[str]
-
-
-class TopologicalMetrics(NamedTuple):
-    von_neumann_entropy: float
-    state_vector: np.ndarray
-
-
-## ═══════════════════════════════════════════════════════════════════════
 # EXECUTION PIPELINE — 8-LAYER INTEGRATED FLOW
 # ═══════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
@@ -549,4 +395,3 @@ if __name__ == "__main__":
         for r in validation.recommendations:
             print(f"     • {r}")
     print("═"*52 + "\n")
-
